@@ -10,14 +10,15 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:ownership-vscode.helloWorld"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "ownership-vscode.helloWorld",
-        "title": "Hello World"
+        "command": "ownership-vscode.validate",
+        "title": "Validate",
+        "category": "Codeowners"
       }
     ]
   },
@@ -68,5 +69,8 @@
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "minimatch": "^5.0.1"
+  }
 }
