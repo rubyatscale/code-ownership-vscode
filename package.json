@@ -1,44 +1,72 @@
 {
   "name": "ownership-vscode",
   "version": "0.0.1",
+  "displayName": "Ownership for VSCode",
   "description": "VSCode extension Gusto Code Ownership",
-  "main": "./lib/index.js",
+  "engines": {
+    "vscode": "^1.66.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:ownership-vscode.helloWorld"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ownership-vscode.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
   "scripts": {
     "test": "jest",
     "clean": "run-s -s clean:*",
     "lint": "run-s -s lint:*",
     "fix": "run-s -s fix:*",
-    "clean:output": "rimraf lib",
-    "start": "node ./lib/index.js",
+    "clean:output": "rimraf dist",
+    "start": "node ./dist/index.js",
     "prebuild": "run-s -s clean lint",
-    "build": "tsc",
+    "build": "run-s compile",
     "lint:eslint": "eslint src/**/*.*",
     "fix:eslint": "eslint --fix src/**/*.*",
     "lint:prettier": "prettier -c .",
     "fix:prettier": "prettier -w .",
     "clean:coverage": "rimraf coverage",
-    "pretest": "run-s -s clean"
+    "pretest": "run-s -s clean",
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map"
   },
   "keywords": [],
   "author": "",
   "files": [
-    "lib"
+    "dist"
   ],
   "private": true,
   "devDependencies": {
+    "@types/glob": "^7.2.0",
     "@types/jest": "^27.4.0",
     "@types/node": "^17.0.31",
+    "@types/vscode": "^1.67.0",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "eslint": "^8.3.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.3",
+    "glob": "^8.0.1",
     "jest": "^27.2.5",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
-    "typescript": "^4.5.2"
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.5.2",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2"
   },
   "license": "MIT"
 }
