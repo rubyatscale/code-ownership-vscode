@@ -1,31 +1,36 @@
 import { EOL } from 'os';
 import { join, relative, sep } from 'path';
+import * as cp from 'child_process';
 
 import * as minimatch from 'minimatch'; // Only needed for githubValiator
 import * as vscode from 'vscode';
 
 let statusBarItem: vscode.StatusBarItem;
+let channel: vscode.OutputChannel;
 
 function updateStatus(active: vscode.TextEditor | undefined) {
+  console.log(active);
   if (active) {
-    statusBarItem.text = '$(watch) Owner: running...';
+    statusBarItem.text = '$(loading~spin) Owner: running...';
     statusBarItem.show();
-    process.nextTick(() => {
+    setTimeout(() => {
       try {
-        githubValidator(active.document.uri.fsPath).then((owner) => {
+        codeownershipValidator(active.document.uri.fsPath).then((owner) => {
           if (
             active.document.uri.fsPath ===
             vscode.window.activeTextEditor?.document.uri.fsPath
           ) {
-            if (owner) {
-              statusBarItem.text = `$(account) Owner: ${owner.name}`;
+            if (owner && owner.teamName !== 'Unowned') {
+              statusBarItem.text = `$(account) Owner: ${owner.teamName}`;
             } else {
-              statusBarItem.text = `$(warning) Owner: none`;
+              statusBarItem.text = `$(warning) Owner: Unowned`;
             }
             statusBarItem.show();
           }
         });
-      } catch {
+      } catch (ex) {
+        log('error', ex.message || ex.toString());
+
         if (
           active.document.uri.fsPath ===
           vscode.window.activeTextEditor?.document.uri.fsPath
@@ -34,13 +39,16 @@ function updateStatus(active: vscode.TextEditor | undefined) {
           statusBarItem.show();
         }
       }
-    });
+    }, 50);
   } else {
     statusBarItem.hide();
   }
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  channel = vscode.window.createOutputChannel('Code Ownership');
+  context.subscriptions.push(channel);
+
   const disposable = vscode.commands.registerCommand(
     'ownership-vscode.validate',
     () => {
@@ -59,12 +67,14 @@ export function activate(context: vscode.ExtensionContext) {
   updateStatus(vscode.window.activeTextEditor);
 
   context.subscriptions.push(disposable);
+
+  log('info', 'Exension activated');
 }
 
 type Owner = {
   filepath: string;
-  name: string;
-  config: string;
+  teamName: string;
+  teamConfig: string;
 };
 
 type Validator = (filepath: string) => Promise<Owner | undefined>;
@@ -87,8 +97,8 @@ const mockValidator: Validator = (filepath) => {
 
       res({
         filepath,
-        name: `Some Team`,
-        config: filepath,
+        teamName: `Some Team`,
+        teamConfig: filepath,
       });
     }, ms),
   );
@@ -123,11 +133,69 @@ const githubValidator: Validator = async (filepath) => {
     if (minimatch(rel, pattern)) {
       return {
         filepath,
-        name: owner,
-        config: config.fsPath,
+        teamName: owner,
+        teamConfig: config.fsPath,
       };
     }
   }
 
   return undefined;
 };
+
+const codeownershipValidator: Validator = async (filepath) => {
+  const output = runCommand(
+    process.cwd(),
+    `bin/codeownership for_file ${filepath} --json`,
+  );
+
+  try {
+    const obj = JSON.parse(output);
+
+    if (typeof obj.team_name !== 'string') {
+      log('warning', 'Missing expected property `team_name` in command output');
+    }
+    if (typeof obj.team_yml !== 'string') {
+      log('warning', 'Missing expected property `team_yml` in command output');
+    }
+
+    if (typeof obj.team_name === 'string' && typeof obj.team_yml === 'string') {
+      return {
+        filepath,
+        teamName: obj.team_name,
+        teamConfig: obj.team_yml,
+      };
+    }
+  } catch {
+    log('error', 'Error parsing command output');
+  }
+  return undefined;
+};
+
+function runCommand(cwd: string, command: string, stdin?: string): string {
+  let stdout: string = '';
+  log('info', `command: ${command}`);
+
+  stdout = cp
+    .execSync(command, {
+      cwd,
+      input: stdin,
+    })
+    .toString()
+    .trim();
+
+  log('info', `stdout: ${stdout}`);
+
+  return stdout;
+}
+
+function log(level: 'debug' | 'info' | 'warning' | 'error', msg: string) {
+  channel.appendLine(`[${date()}] [${level}] ${msg}`);
+}
+
+function date() {
+  return (
+    new Date().toLocaleString('sv') +
+    '.' +
+    `000${new Date().getMilliseconds()}`.slice(-3)
+  );
+}
