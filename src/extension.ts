@@ -145,7 +145,7 @@ const githubValidator: Validator = async (filepath) => {
 const codeownershipValidator: Validator = async (filepath) => {
   const output = runCommand(
     process.cwd(),
-    `bin/codeownership for_file ${filepath} --json`,
+    `bin/codeownership for_file "${filepath}" --json`,
   );
 
   try {
