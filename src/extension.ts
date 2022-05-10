@@ -1,5 +1,5 @@
 import { EOL } from 'os';
-import { join, relative, sep } from 'path';
+import { join, relative, resolve, sep } from 'path';
 import * as cp from 'child_process';
 
 import * as minimatch from 'minimatch'; // Only needed for githubValiator
@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 
 let statusBarItem: vscode.StatusBarItem;
 let channel: vscode.OutputChannel;
+let owner: Owner | undefined = undefined;
 
 function updateStatus(active: vscode.TextEditor | undefined) {
   console.log(active);
@@ -15,15 +16,16 @@ function updateStatus(active: vscode.TextEditor | undefined) {
     statusBarItem.show();
     setTimeout(() => {
       try {
-        codeownershipValidator(active.document.uri.fsPath).then((owner) => {
+        codeownershipValidator(active.document.uri.fsPath).then((result) => {
+          owner = result;
           if (
             active.document.uri.fsPath ===
             vscode.window.activeTextEditor?.document.uri.fsPath
           ) {
-            if (owner && owner.teamName !== 'Unowned') {
-              statusBarItem.text = `$(account) Owner: ${owner.teamName}`;
+            if (result) {
+              statusBarItem.text = `$(account) Owner: ${result.teamName}`;
             } else {
-              statusBarItem.text = `$(warning) Owner: Unowned`;
+              statusBarItem.text = `$(warning) Owner: none`;
             }
             statusBarItem.show();
           }
@@ -49,6 +51,31 @@ export function activate(context: vscode.ExtensionContext) {
   channel = vscode.window.createOutputChannel('Code Ownership');
   context.subscriptions.push(channel);
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'code-ownership-vscode.showOwnershipInfo',
+      () => {
+        if (owner) {
+          const filename = owner.filepath.split(sep).slice(-1)[0];
+          const { teamConfig } = owner;
+
+          vscode.window
+            .showInformationMessage(
+              `${filename} is owned by ${owner.teamName}`,
+              {
+                title: 'View team config',
+                action() {
+                  const uri = vscode.Uri.parse(teamConfig);
+                  vscode.commands.executeCommand('vscode.open', uri);
+                },
+              },
+            )
+            .then((x) => x?.action());
+        }
+      },
+    ),
+  );
+
   const disposable = vscode.commands.registerCommand(
     'code-ownership-vscode.validate',
     () => {
@@ -62,6 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
   );
+  statusBarItem.command = 'code-ownership-vscode.showOwnershipInfo';
 
   vscode.window.onDidChangeActiveTextEditor(updateStatus);
   updateStatus(vscode.window.activeTextEditor);
@@ -128,12 +156,12 @@ const githubValidator: Validator = async (filepath) => {
   const codeowners = doc.getText().split(EOL);
 
   for (const line of codeowners) {
-    const [pattern, owner] = line.split(' ');
+    const [pattern, teamName] = line.split(' ');
 
     if (minimatch(rel, pattern)) {
       return {
         filepath,
-        teamName: owner,
+        teamName,
         teamConfig: config.fsPath,
       };
     }
@@ -158,11 +186,18 @@ const codeownershipValidator: Validator = async (filepath) => {
       log('warning', 'Missing expected property `team_yml` in command output');
     }
 
-    if (typeof obj.team_name === 'string' && typeof obj.team_yml === 'string') {
+    if (
+      typeof obj.team_name === 'string' &&
+      typeof obj.team_yml === 'string' &&
+      obj.team_name !== 'Unowned'
+    ) {
       return {
         filepath,
         teamName: obj.team_name,
-        teamConfig: obj.team_yml,
+        teamConfig: resolve(
+          vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+          obj.team_yml,
+        ),
       };
     }
   } catch {

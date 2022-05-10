@@ -18,7 +18,12 @@
       {
         "command": "code-ownership-vscode.validate",
         "title": "Validate",
-        "category": "Codeowners"
+        "category": "Code Ownership"
+      },
+      {
+        "command": "code-ownership-vscode.showOwnershipInfo",
+        "title": "Show ownership info",
+        "category": "Code Ownership"
       }
     ]
   },
