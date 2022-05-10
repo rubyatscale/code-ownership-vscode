@@ -1,7 +1,7 @@
 {
-  "name": "ownership-vscode",
+  "name": "code-ownership-vscode",
   "version": "0.0.1",
-  "displayName": "Ownership for VSCode",
+  "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Gusto Code Ownership",
   "engines": {
     "vscode": "^1.66.0"
@@ -16,7 +16,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "ownership-vscode.validate",
+        "command": "code-ownership-vscode.validate",
         "title": "Validate",
         "category": "Codeowners"
       }

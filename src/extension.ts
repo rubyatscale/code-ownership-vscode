@@ -50,11 +50,11 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(channel);
 
   const disposable = vscode.commands.registerCommand(
-    'ownership-vscode.validate',
+    'code-ownership-vscode.validate',
     () => {
       // TODO: do something for real
       vscode.window.showInformationMessage(
-        'Hello World from ownership-vscode!',
+        'Hello World from code-ownership-vscode!',
       );
     },
   );
