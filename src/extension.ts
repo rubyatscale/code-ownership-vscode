@@ -1,8 +1,10 @@
 import { EOL } from 'os';
 import { join, relative, resolve, sep } from 'path';
 import * as cp from 'child_process';
+import { readFile } from 'fs/promises';
 
 import * as minimatch from 'minimatch'; // Only needed for githubValiator
+import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
 let statusBarItem: vscode.StatusBarItem;
@@ -10,7 +12,6 @@ let channel: vscode.OutputChannel;
 let owner: Owner | undefined = undefined;
 
 function updateStatus(active: vscode.TextEditor | undefined) {
-  console.log(active);
   if (active) {
     statusBarItem.text = '$(loading~spin) Owner: running...';
     statusBarItem.show();
@@ -18,6 +19,7 @@ function updateStatus(active: vscode.TextEditor | undefined) {
       try {
         codeownershipValidator(active.document.uri.fsPath).then((result) => {
           owner = result;
+          log('debug', JSON.stringify(owner));
           if (
             active.document.uri.fsPath ===
             vscode.window.activeTextEditor?.document.uri.fsPath
@@ -57,18 +59,34 @@ export function activate(context: vscode.ExtensionContext) {
       () => {
         if (owner) {
           const filename = owner.filepath.split(sep).slice(-1)[0];
-          const { teamConfig } = owner;
+          const { teamConfig, slack } = owner;
+
+          const items: { title: string; action: () => void }[] = [];
+
+          if (slack) {
+            items.push({
+              title: `Slack: #${slack}`,
+              action() {
+                const uri = vscode.Uri.parse(
+                  `https://slack.com/app_redirect?channel=${slack}`,
+                );
+                vscode.commands.executeCommand('vscode.open', uri);
+              },
+            });
+          }
+
+          items.push({
+            title: 'View team config',
+            action() {
+              const uri = vscode.Uri.parse(teamConfig);
+              vscode.commands.executeCommand('vscode.open', uri);
+            },
+          });
 
           vscode.window
             .showInformationMessage(
               `${filename} is owned by ${owner.teamName}`,
-              {
-                title: 'View team config',
-                action() {
-                  const uri = vscode.Uri.parse(teamConfig);
-                  vscode.commands.executeCommand('vscode.open', uri);
-                },
-              },
+              ...items,
             )
             .then((x) => x?.action());
         }
@@ -103,6 +121,7 @@ type Owner = {
   filepath: string;
   teamName: string;
   teamConfig: string;
+  slack?: string;
 };
 
 type Validator = (filepath: string) => Promise<Owner | undefined>;
@@ -191,13 +210,16 @@ const codeownershipValidator: Validator = async (filepath) => {
       typeof obj.team_yml === 'string' &&
       obj.team_name !== 'Unowned'
     ) {
+      const teamConfig = resolve(
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        obj.team_yml,
+      );
+
       return {
         filepath,
         teamName: obj.team_name,
-        teamConfig: resolve(
-          vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-          obj.team_yml,
-        ),
+        teamConfig,
+        slack: await getSlackHandle(teamConfig),
       };
     }
   } catch {
@@ -205,6 +227,22 @@ const codeownershipValidator: Validator = async (filepath) => {
   }
   return undefined;
 };
+
+async function getSlackHandle(teamConfig: string): Promise<string | undefined> {
+  try {
+    const text = (await readFile(teamConfig)).toString();
+    const config = yaml.load(text) as any;
+
+    if (typeof config?.slack?.room_for_humans === 'string') {
+      const slack = config?.slack?.room_for_humans;
+      return slack.startsWith('#') ? slack.slice(1) : slack;
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function runCommand(cwd: string, command: string, stdin?: string): string {
   let stdout: string = '';
