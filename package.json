@@ -4,7 +4,7 @@
   "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Gusto Code Ownership",
   "engines": {
-    "vscode": "^1.66.0"
+    "vscode": "^1.67.0"
   },
   "categories": [
     "Other"
