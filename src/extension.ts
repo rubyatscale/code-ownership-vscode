@@ -57,34 +57,16 @@ export function activate(context: vscode.ExtensionContext) {
       () => {
         if (owner) {
           const filename = owner.filepath.split(sep).slice(-1)[0];
-          const { teamConfig, slack } = owner;
-
-          const items: { title: string; action: () => void }[] = [];
-
-          if (slack) {
-            items.push({
-              title: `Slack: #${slack}`,
-              action() {
-                const uri = vscode.Uri.parse(
-                  `https://slack.com/app_redirect?channel=${slack}`,
-                );
-                vscode.commands.executeCommand('vscode.open', uri);
-              },
-            });
-          }
-
-          items.push({
-            title: 'View team config',
-            action() {
-              const uri = vscode.Uri.parse(teamConfig);
-              vscode.commands.executeCommand('vscode.open', uri);
-            },
-          });
 
           vscode.window
             .showInformationMessage(
               `${filename} is owned by ${owner.teamName}`,
-              ...items,
+              ...owner.actions.map((action) => ({
+                title: action.title,
+                action() {
+                  vscode.commands.executeCommand('vscode.open', action.uri);
+                },
+              })),
             )
             .then((x) => x?.action());
         }
@@ -119,7 +101,12 @@ type Owner = {
   filepath: string;
   teamName: string;
   teamConfig: string;
-  slack?: string;
+  actions: UserAction[];
+};
+
+type UserAction = {
+  title: string;
+  uri: vscode.Uri;
 };
 
 type Validator = (filepath: string) => Promise<Owner | undefined>;
@@ -144,6 +131,7 @@ const mockValidator: Validator = (filepath) => {
         filepath,
         teamName: `Some Team`,
         teamConfig: filepath,
+        actions: [],
       });
     }, ms),
   );
@@ -178,11 +166,29 @@ const codeownershipValidator: Validator = async (filepath) => {
         obj.team_yml,
       );
 
+      const actions: UserAction[] = [];
+
+      const slackChannel = await getSlackChannel(teamConfig);
+
+      if (slackChannel) {
+        actions.push({
+          title: `Slack: #${slackChannel}`,
+          uri: vscode.Uri.parse(
+            `https://slack.com/app_redirect?channel=${slackChannel}`,
+          ),
+        });
+      }
+
+      actions.push({
+        title: 'View team config',
+        uri: vscode.Uri.parse(teamConfig),
+      });
+
       return {
         filepath,
         teamName: obj.team_name,
         teamConfig,
-        slack: await getSlackHandle(teamConfig),
+        actions,
       };
     }
   } catch {
@@ -191,7 +197,9 @@ const codeownershipValidator: Validator = async (filepath) => {
   return undefined;
 };
 
-async function getSlackHandle(teamConfig: string): Promise<string | undefined> {
+async function getSlackChannel(
+  teamConfig: string,
+): Promise<string | undefined> {
   try {
     const text = (await readFile(teamConfig)).toString();
     const config = yaml.load(text) as any;
