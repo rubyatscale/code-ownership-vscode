@@ -1,9 +1,7 @@
-import { EOL } from 'os';
-import { join, relative, resolve, sep } from 'path';
+import { relative, resolve, sep } from 'path';
 import * as cp from 'child_process';
 import { readFile } from 'fs/promises';
 
-import * as minimatch from 'minimatch'; // Only needed for githubValiator
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
@@ -149,44 +147,6 @@ const mockValidator: Validator = (filepath) => {
       });
     }, ms),
   );
-};
-
-/**
- * Checks for file ownership by looking at the existing `.github/CODEOWNERS` file
- * @param filepath path of the file to check
- * @returns an {@link Owner Owner} object or `undefined` if no owner can be determined
- */
-const githubValidator: Validator = async (filepath) => {
-  const config = vscode.Uri.parse(
-    join(
-      vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-      '.github',
-      'CODEOWNERS',
-    ),
-  );
-
-  const rel = `${sep}${relative(
-    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-    filepath,
-  )}`;
-
-  const doc = await vscode.workspace.openTextDocument(config);
-
-  const codeowners = doc.getText().split(EOL);
-
-  for (const line of codeowners) {
-    const [pattern, teamName] = line.split(' ');
-
-    if (minimatch(rel, pattern)) {
-      return {
-        filepath,
-        teamName,
-        teamConfig: config.fsPath,
-      };
-    }
-  }
-
-  return undefined;
 };
 
 const codeownershipValidator: Validator = async (filepath) => {
