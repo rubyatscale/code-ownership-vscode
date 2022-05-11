@@ -171,9 +171,12 @@ const githubValidator: Validator = async (filepath) => {
 };
 
 const codeownershipValidator: Validator = async (filepath) => {
+  // bin/codeownership currenlty wants relative paths
+  const relativePath = relative(process.cwd(), filepath);
+
   const output = runCommand(
     process.cwd(),
-    `bin/codeownership for_file "${filepath}" --json`,
+    `bin/codeownership for_file "${relativePath}" --json`,
   );
 
   try {
