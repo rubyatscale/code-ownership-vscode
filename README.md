@@ -1,5 +1,9 @@
 # Code Ownership for VSCode
 
+View code ownership information within your favorite editor!
+
+![feature X](images/hero.gif)
+
 ## Features
 
 Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
