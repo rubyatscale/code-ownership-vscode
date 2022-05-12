@@ -1,6 +1,6 @@
 {
   "name": "code-ownership-vscode",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Gusto Code Ownership",
   "engines": {
