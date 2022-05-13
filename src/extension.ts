@@ -5,19 +5,35 @@ import { readFile } from 'fs/promises';
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
+let ranWithError = false;
 let statusBarItem: vscode.StatusBarItem;
 let channel: vscode.OutputChannel;
 let owner: Owner | undefined = undefined;
 
+function rootWorkspace(): vscode.WorkspaceFolder | undefined {
+  const count = vscode.workspace.workspaceFolders?.length || 0;
+  if (count === 1) {
+    return vscode.workspace.workspaceFolders?.[0];
+  } else {
+    log('warning', `Detected ${count} workspaces, but currently requires 1.`);
+    return undefined;
+  }
+}
+
 function updateStatus(active: vscode.TextEditor | undefined) {
-  if (active) {
+  if (ranWithError) {
+    statusBarItem.text = '$(error) Owner: Error!';
+    statusBarItem.tooltip = `See "${channel.name}" output channel for details`;
+    statusBarItem.show();
+  } else if (active) {
     statusBarItem.text = '$(loading~spin) Owner: running...';
+    statusBarItem.tooltip = undefined;
     statusBarItem.show();
     setTimeout(() => {
       try {
         codeownershipValidator(active.document.uri.fsPath).then((result) => {
           owner = result;
-          log('debug', JSON.stringify(owner));
+          log('debug', `owner: ${JSON.stringify(owner)}`);
           if (
             active.document.uri.fsPath ===
             vscode.window.activeTextEditor?.document.uri.fsPath
@@ -139,14 +155,21 @@ const mockValidator: Validator = (filepath) => {
 
 const codeownershipValidator: Validator = async (filepath) => {
   // bin/codeownership currenlty wants relative paths
-  const relativePath = relative(process.cwd(), filepath);
+  const cwd = rootWorkspace()?.uri.fsPath;
+  const relativePath = relative(cwd || process.cwd(), filepath);
 
-  const output = runCommand(
-    process.cwd(),
-    `bin/codeownership for_file "${relativePath}" --json`,
-  );
+  logSpace();
+  log('debug', `cwd: ${cwd}`);
+  log('debug', `workspace: ${rootWorkspace()?.uri.fsPath}`);
+  log('debug', `file path: ${filepath}`);
+  log('debug', `relative path: ${relativePath}`);
 
   try {
+    const output = runCommand(
+      cwd,
+      `bin/codeownership for_file "${relativePath}" --json`,
+    );
+
     const obj = JSON.parse(output);
 
     if (typeof obj.team_name !== 'string') {
@@ -162,7 +185,7 @@ const codeownershipValidator: Validator = async (filepath) => {
       obj.team_name !== 'Unowned'
     ) {
       const teamConfig = resolve(
-        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        rootWorkspace()?.uri.fsPath || '',
         obj.team_yml,
       );
 
@@ -191,7 +214,9 @@ const codeownershipValidator: Validator = async (filepath) => {
         actions,
       };
     }
+    ranWithError = false;
   } catch {
+    ranWithError = true;
     log('error', 'Error parsing command output');
   }
   return undefined;
@@ -215,21 +240,35 @@ async function getSlackChannel(
   }
 }
 
-function runCommand(cwd: string, command: string, stdin?: string): string {
+function runCommand(
+  cwd: string | undefined,
+  command: string,
+  stdin?: string,
+): string {
   let stdout: string = '';
   log('info', `command: ${command}`);
 
-  stdout = cp
-    .execSync(command, {
-      cwd,
-      input: stdin,
-    })
-    .toString()
-    .trim();
+  try {
+    stdout = cp
+      .execSync(command, {
+        cwd,
+        input: stdin,
+      })
+      .toString()
+      .trim();
 
-  log('info', `stdout: ${stdout}`);
+    log('info', `stdout: ${stdout}`);
+    ranWithError = false;
+  } catch (ex) {
+    ranWithError = true;
+    log('error', ex.message);
+  }
 
   return stdout;
+}
+
+function logSpace() {
+  channel.appendLine('');
 }
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', msg: string) {
