@@ -2,75 +2,23 @@
 
 View code ownership information within your favorite editor!
 
-![feature X](images/hero.gif)
+![Code Ownership](./images/hero.gif)
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+View code ownership for every file right in the status bar. You'll the the name of the owning team in the status bar or an alert showing that the file is unowned.
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Quick access to the owning teams config file. Clicking on the status bar item will open a popup that includes a button that opens the team's config file. See [Big Rails Teams](https://github.com/bigrails/bigrails-teams) for more information on team config files.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-- `myExtension.enable`: enable/disable this extension
-- `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+This extension runs the [CodeOwnership](https://github.com/bigrails/code_ownership) CLI. You'll need to install and configure [CodeOwnership](https://github.com/bigrails/code_ownership) in your repository before using this extension. (Before it's setup, you'll see `Owner: error!` in the status bar.)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.4 - 2022-05-13
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-- [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-- Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-- Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-- Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-- [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-- [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Initial release
 
 ---
 
