@@ -1,6 +1,7 @@
 {
   "name": "code-ownership-vscode",
   "version": "0.0.3",
+  "publisher": "Gusto",
   "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Gusto Code Ownership",
   "engines": {
@@ -15,7 +16,7 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Gusto/code-ownership-vscode.git"
+    "url": "https://github.com/Gusto/code-ownership-vscode.git"
   },
   "contributes": {
     "commands": [
