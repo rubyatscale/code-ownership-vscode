@@ -20,8 +20,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "code-ownership-vscode.validate",
-        "title": "Validate",
+        "command": "code-ownership-vscode.run",
+        "title": "Run",
         "category": "Code Ownership"
       },
       {
