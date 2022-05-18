@@ -3,7 +3,7 @@
   "version": "0.0.4",
   "publisher": "Gusto",
   "displayName": "Code Ownership for VSCode",
-  "description": "VSCode extension Gusto Code Ownership",
+  "description": "VSCode extension Big Rails Code Ownership",
   "engines": {
     "vscode": "^1.67.0"
   },
@@ -16,7 +16,7 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Gusto/code-ownership-vscode.git"
+    "url": "https://github.com/bigrails/code-ownership-vscode.git"
   },
   "contributes": {
     "commands": [
