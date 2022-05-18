@@ -33,7 +33,7 @@
     ]
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "clean": "run-s -s clean:*",
     "lint": "run-s -s lint:*",
     "fix": "run-s -s fix:*",
@@ -41,6 +41,7 @@
     "start": "node ./dist/index.js",
     "prebuild": "run-s -s clean lint",
     "build": "run-s compile",
+    "build:prod": "run-s package",
     "lint:eslint": "eslint src/**/*.*",
     "fix:eslint": "eslint --fix src/**/*.*",
     "lint:prettier": "prettier -c .",
