@@ -16,7 +16,7 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bigrails/code-ownership-vscode.git"
+    "url": "https://github.com/rubyatscale/code-ownership-vscode.git"
   },
   "contributes": {
     "commands": [
