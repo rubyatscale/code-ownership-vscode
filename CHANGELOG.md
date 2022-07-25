@@ -6,7 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [0.0.5] - 2022-07-25
+## [0.0.7] - 2022-07-25
 
 - When the ownership status bar item indicates an error, clicking on the status bar item will show the extension's Output Channel.
 

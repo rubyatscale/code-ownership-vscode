@@ -16,7 +16,7 @@ This extension runs the [CodeOwnership](https://github.com/rubyatscale/code_owne
 
 ## Release Notes
 
-## 0.0.4 - 2022-07-25
+## 0.0.7 - 2022-07-25
 
 - When the ownership status bar item indicates an error, clicking on the status bar item will show the extension's Output Channel.
 
