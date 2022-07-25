@@ -39,6 +39,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('code-ownership-vscode.run', run),
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'code-ownership-vscode.showOutputChannel',
+      () => {
+        channel.show();
+      },
+    ),
+  );
+
   const statusProvider = new StatusProvider(statusBarItem);
   context.subscriptions.push(statusProvider);
 
@@ -209,6 +218,12 @@ class StatusProvider implements vscode.Disposable {
   }
 
   private update() {
+    if (this.status === 'error') {
+      this.statusBarItem.command = 'code-ownership-vscode.showOutputChannel';
+    } else {
+      this.statusBarItem.command = 'code-ownership-vscode.showOwnershipInfo';
+    }
+
     if (this.status === 'error') {
       this.statusBarItem.text = '$(error) Owner: Error!';
       this.statusBarItem.tooltip = `See "${channel.name}" output channel for details`;
