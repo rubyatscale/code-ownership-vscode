@@ -33,6 +33,5 @@ jobs:
           path: node_modules
           key: ${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
       - run: npm run build:prod
       - run: npm test
