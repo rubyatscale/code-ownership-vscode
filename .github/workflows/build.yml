@@ -23,7 +23,7 @@ jobs:
           git config --global core.eol lf
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Cache Node Modules
@@ -33,6 +33,5 @@ jobs:
           path: node_modules
           key: ${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
       - run: npm run build:prod
       - run: npm test
