@@ -202,6 +202,7 @@ class StatusProvider implements vscode.Disposable {
 
   private _status: Status = 'idle';
   private _owner: Owner | undefined = undefined;
+  private _isConfigured: boolean | null = null;
 
   get status(): Status {
     return this._status;
@@ -216,6 +217,14 @@ class StatusProvider implements vscode.Disposable {
   }
   set owner(value: Owner | undefined) {
     this._owner = value;
+    this.update();
+  }
+
+  get isConfigured(): boolean | null {
+    return this._isConfigured;
+  }
+  set isConfigured(value: boolean | null) {
+    this._isConfigured = value;
     this.update();
   }
 
@@ -239,9 +248,13 @@ class StatusProvider implements vscode.Disposable {
         this.statusBarItem.text = `$(account) Owner: ${this.owner.teamName}`;
         this.statusBarItem.tooltip = undefined;
         this.statusBarItem.show();
+      } else if (this.isConfigured === false) {
+        this.statusBarItem.text = `$(info) Ownership: not configured`;
+        this.statusBarItem.tooltip = 'This workspace is not configured for code ownership';
+        this.statusBarItem.show();
       } else {
         this.statusBarItem.text = `$(warning) Owner: none`;
-        this.statusBarItem.tooltip = undefined;
+        this.statusBarItem.tooltip = 'This file has no assigned team ownership';
         this.statusBarItem.show();
       }
     }
@@ -265,6 +278,7 @@ class Worker implements vscode.Disposable {
   private async checkConfiguration(): Promise<void> {
     const binaryPath = resolve(this.workspace.uri.fsPath, 'bin/codeownership');
     this.isConfigured = existsSync(binaryPath);
+    this.statusProvider.isConfigured = this.isConfigured;
 
     if (!this.isConfigured) {
       log('info', `No code ownership binary found in workspace: ${this.workspace.name}`);
