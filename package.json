@@ -1,6 +1,6 @@
 {
   "name": "code-ownership-vscode",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "publisher": "Gusto",
   "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Big Rails Code Ownership",
