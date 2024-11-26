@@ -9,7 +9,8 @@ let channel: vscode.OutputChannel;
 
 function run(file: string | vscode.Uri | null | undefined) {
   if (!file) {
-    run(vscode.window.activeTextEditor?.document.uri);
+    if (!vscode.window.activeTextEditor) return;
+    run(vscode.window.activeTextEditor.document.uri);
     return;
   }
 
@@ -254,7 +255,7 @@ class Worker implements vscode.Disposable {
   constructor(
     private readonly workspace: vscode.WorkspaceFolder,
     private readonly statusProvider: StatusProvider,
-  ) {}
+  ) { }
 
   workspaceHas(file: vscode.Uri): boolean {
     return file.fsPath.startsWith(this.workspace.uri.fsPath);
