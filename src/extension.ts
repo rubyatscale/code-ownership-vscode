@@ -1,6 +1,7 @@
 import { relative, resolve, sep } from 'path';
 import * as cp from 'child_process';
 import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
@@ -252,111 +253,122 @@ class StatusProvider implements vscode.Disposable {
 }
 
 class Worker implements vscode.Disposable {
+  private isConfigured: boolean | null = null;
+
   constructor(
     private readonly workspace: vscode.WorkspaceFolder,
     private readonly statusProvider: StatusProvider,
-  ) { }
+  ) {
+    this.checkConfiguration();
+  }
+
+  private async checkConfiguration(): Promise<void> {
+    const binaryPath = resolve(this.workspace.uri.fsPath, 'bin/codeownership');
+    this.isConfigured = existsSync(binaryPath);
+
+    if (!this.isConfigured) {
+      log('info', `No code ownership binary found in workspace: ${this.workspace.name}`);
+    } else {
+      log('info', `Code ownership binary found in workspace: ${this.workspace.name}`);
+    }
+  }
 
   workspaceHas(file: vscode.Uri): boolean {
     return file.fsPath.startsWith(this.workspace.uri.fsPath);
   }
 
   async run(file: vscode.Uri): Promise<void> {
-    if (this.workspaceHas(file)) {
-      this.statusProvider.status = 'working';
-      await new Promise((r) => setTimeout(r, 50));
+    if (!this.workspaceHas(file)) return;
 
-      const cwd = this.workspace.uri.fsPath;
-      const relativePath = relative(cwd, file.fsPath);
+    if (this.isConfigured === null) {
+      await this.checkConfiguration();
+    }
 
-      logSpace();
-      log('info', `Checking ownership for ${relativePath}`);
-      log('debug', `cwd: ${cwd}`);
-      log('debug', `workspace: ${this.workspace.uri.fsPath}`);
-      log('debug', `file path: ${file.fsPath}`);
+    if (!this.isConfigured) {
+      this.statusProvider.owner = undefined;
+      this.statusProvider.status = 'idle';
+      return;
+    }
 
-      // Check if binary exists
-      const checkBinary = await runCommand(
-        cwd,
-        'test -f bin/codeownership && echo "exists"',
-        this.statusProvider
-      );
+    this.statusProvider.status = 'working';
+    await new Promise((r) => setTimeout(r, 50));
 
-      if (!checkBinary) {
-        log('info', 'No code ownership binary found in project');
+    const cwd = this.workspace.uri.fsPath;
+    const relativePath = relative(cwd, file.fsPath);
+
+    logSpace();
+    log('info', `Checking ownership for ${relativePath}`);
+    log('debug', `cwd: ${cwd}`);
+    log('debug', `workspace: ${this.workspace.uri.fsPath}`);
+    log('debug', `file path: ${file.fsPath}`);
+
+    // Run ownership check
+    const output = await runCommand(
+      cwd,
+      `bin/codeownership for_file "${relativePath}" --json`,
+      this.statusProvider,
+    );
+
+    if (!output) {
+      log('info', 'Code ownership check returned no output');
+      this.statusProvider.owner = undefined;
+      this.statusProvider.status = 'idle';
+      return;
+    }
+
+    try {
+      const obj = JSON.parse(output);
+
+      if (!obj.team_name) {
+        log('info', 'No team name found in ownership data');
         this.statusProvider.owner = undefined;
         this.statusProvider.status = 'idle';
         return;
       }
 
-      // Run ownership check
-      const output = await runCommand(
-        cwd,
-        `bin/codeownership for_file "${relativePath}" --json`,
-        this.statusProvider,
-      );
-
-      if (!output) {
-        log('info', 'Code ownership check returned no output');
+      if (!obj.team_yml) {
+        log('info', 'No team config file found in ownership data');
         this.statusProvider.owner = undefined;
         this.statusProvider.status = 'idle';
         return;
       }
 
-      try {
-        const obj = JSON.parse(output);
+      if (obj.team_name === 'Unowned') {
+        log('info', 'File is explicitly unowned');
+        this.statusProvider.owner = undefined;
+        this.statusProvider.status = 'idle';
+        return;
+      }
 
-        if (!obj.team_name) {
-          log('info', 'No team name found in ownership data');
-          this.statusProvider.owner = undefined;
-          this.statusProvider.status = 'idle';
-          return;
-        }
+      const teamConfig = resolve(this.workspace.uri.fsPath, obj.team_yml);
+      const actions: UserAction[] = [];
 
-        if (!obj.team_yml) {
-          log('info', 'No team config file found in ownership data');
-          this.statusProvider.owner = undefined;
-          this.statusProvider.status = 'idle';
-          return;
-        }
-
-        if (obj.team_name === 'Unowned') {
-          log('info', 'File is explicitly unowned');
-          this.statusProvider.owner = undefined;
-          this.statusProvider.status = 'idle';
-          return;
-        }
-
-        const teamConfig = resolve(this.workspace.uri.fsPath, obj.team_yml);
-        const actions: UserAction[] = [];
-
-        const slackChannel = await getSlackChannel(teamConfig);
-        if (slackChannel) {
-          actions.push({
-            title: `Slack: #${slackChannel}`,
-            uri: vscode.Uri.parse(
-              `https://slack.com/app_redirect?channel=${slackChannel}`,
-            ),
-          });
-        }
-
+      const slackChannel = await getSlackChannel(teamConfig);
+      if (slackChannel) {
         actions.push({
-          title: 'View team config',
-          uri: vscode.Uri.parse(teamConfig),
+          title: `Slack: #${slackChannel}`,
+          uri: vscode.Uri.parse(
+            `https://slack.com/app_redirect?channel=${slackChannel}`,
+          ),
         });
-
-        this.statusProvider.owner = {
-          filepath: file.fsPath,
-          teamName: obj.team_name,
-          teamConfig,
-          actions,
-        };
-        this.statusProvider.status = 'idle';
-      } catch (error) {
-        log('info', `Invalid ownership data format: ${error.message}`);
-        this.statusProvider.owner = undefined;
-        this.statusProvider.status = 'idle';
       }
+
+      actions.push({
+        title: 'View team config',
+        uri: vscode.Uri.parse(teamConfig),
+      });
+
+      this.statusProvider.owner = {
+        filepath: file.fsPath,
+        teamName: obj.team_name,
+        teamConfig,
+        actions,
+      };
+      this.statusProvider.status = 'idle';
+    } catch (error) {
+      log('info', `Invalid ownership data format: ${error.message}`);
+      this.statusProvider.owner = undefined;
+      this.statusProvider.status = 'idle';
     }
   }
 
