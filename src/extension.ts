@@ -250,7 +250,8 @@ class StatusProvider implements vscode.Disposable {
         this.statusBarItem.show();
       } else if (this.isConfigured === false) {
         this.statusBarItem.text = `$(info) Ownership: not configured`;
-        this.statusBarItem.tooltip = 'This workspace is not configured for code ownership';
+        this.statusBarItem.tooltip =
+          'This workspace is not configured for code ownership';
         this.statusBarItem.show();
       } else {
         this.statusBarItem.text = `$(warning) Owner: none`;
@@ -281,9 +282,15 @@ class Worker implements vscode.Disposable {
     this.statusProvider.isConfigured = this.isConfigured;
 
     if (!this.isConfigured) {
-      log('info', `No code ownership binary found in workspace: ${this.workspace.name}`);
+      log(
+        'info',
+        `No code ownership binary found in workspace: ${this.workspace.name}`,
+      );
     } else {
-      log('info', `Code ownership binary found in workspace: ${this.workspace.name}`);
+      log(
+        'info',
+        `Code ownership binary found in workspace: ${this.workspace.name}`,
+      );
     }
   }
 
