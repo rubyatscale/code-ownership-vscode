@@ -277,7 +277,9 @@ class Worker implements vscode.Disposable {
   }
 
   private async checkConfiguration(): Promise<void> {
-    const binaryPath = resolve(this.workspace.uri.fsPath, 'bin/codeownership');
+    const config = vscode.workspace.getConfiguration('code-ownership-vscode');
+    const command = config.get<string>('command', 'bin/codeownership');
+    const binaryPath = resolve(this.workspace.uri.fsPath, command);
     this.isConfigured = existsSync(binaryPath);
     this.statusProvider.isConfigured = this.isConfigured;
 
@@ -322,11 +324,15 @@ class Worker implements vscode.Disposable {
     log('debug', `cwd: ${cwd}`);
     log('debug', `workspace: ${this.workspace.uri.fsPath}`);
     log('debug', `file path: ${file.fsPath}`);
+    
+    const config = vscode.workspace.getConfiguration('code-ownership-vscode');
+    const command = config.get<string>('command', 'bin/codeownership');
+    const fileArg = config.get<string>('fileArg', 'for_file');
 
     // Run ownership check
     const output = await runCommand(
       cwd,
-      `bin/codeownership for_file "${relativePath}" --json`,
+      `${command} ${fileArg} "${relativePath}" --json`,
       this.statusProvider,
     );
 

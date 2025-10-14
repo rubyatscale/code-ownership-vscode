@@ -16,7 +16,7 @@ Quick access to the owning team's config file. Clicking on the status bar item w
 
 ## Requirements
 
-This extension runs the [CodeOwnership](https://github.com/rubyatscale/code_ownership) CLI. You'll need to install and configure [CodeOwnership](https://github.com/rubyatscale/code_ownership) in your repository before using this extension. (Before it's set up, you'll see `Owner: error!` in the status bar.)
+This extension runs the [CodeOwnership](https://github.com/rubyatscale/code_ownership) CLI. You'll need to install and configure either [CodeOwnership](https://github.com/rubyatscale/code_ownership) (Ruby) or [Codeowners](https://github.com/rubyatscale/codeowners-rs) (Rust) in your repository before using this extension. (Before it's set up, you'll see `Owner: error!` in the status bar.)
 
 ## Release Notes
 
