@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   vscode.commands.executeCommand('code-ownership-vscode.run');
 
-  log('info', 'Exension activated');
+  log('info', 'Extension activated');
 }
 
 type Owner = {

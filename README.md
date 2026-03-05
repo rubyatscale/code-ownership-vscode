@@ -16,11 +16,11 @@ Quick access to the owning team's config file. Clicking on the status bar item w
 
 ## Requirements
 
-This extension runs the [CodeOwnership](https://github.com/rubyatscale/code_ownership) CLI. You'll need to install and configure [CodeOwnership](https://github.com/rubyatscale/code_ownership) in your repository before using this extension. (Before it's set up, you'll see `Owner: error!` in the status bar.)
+This extension runs the [CodeOwnership](https://github.com/rubyatscale/code_ownership) CLI. You'll need to install and configure [CodeOwnership](https://github.com/rubyatscale/code_ownership) in your repository before using this extension. (Before it's set up, you'll see `Owner: Error!` in the status bar.)
 
 ## Release Notes
 
-## 0.0.7 - 2022-07-25
+### 0.0.7 - 2022-07-25
 
 - When the ownership status bar item indicates an error, clicking on the status bar item will show the extension's Output Channel.
 
