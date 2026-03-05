@@ -1,6 +1,6 @@
 {
   "name": "code-ownership-vscode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "Gusto",
   "displayName": "Code Ownership for VSCode",
   "description": "VSCode extension Big Rails Code Ownership",
@@ -17,6 +17,21 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/rubyatscale/code-ownership-vscode.git"
+  },
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "code-ownership-vscode.command": {
+        "type": "string",
+        "default": "bin/codeownership",
+        "description": "The executable command to run the code ownership tool."
+      },
+      "code-ownership-vscode.fileArg": {
+        "type": "string",
+        "default": "for_file",
+        "description": "The file argument to pass to the code ownership tool."
+      }
+    }
   },
   "contributes": {
     "commands": [
