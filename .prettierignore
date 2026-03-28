@@ -2,4 +2,6 @@ coverage
 node_modules
 
 lib
+# Auto-generated conversation history from the SpecStory VS Code extension.
+# Prettier 3 enforces stricter formatting on .md/.json that these files don't conform to.
 .specstory
