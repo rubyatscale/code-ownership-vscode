@@ -11,16 +11,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 18
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
+          # Tag-triggered publishing shouldn't restore a cache that other workflows can write.
+          package-manager-cache: false
       - run: npm ci
-      - run: npm install -g vsce
       - run: npm t
-      - run: vsce package
-      - uses: actions/upload-artifact@v3
+      - run: npx vsce package
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: package
           path: '*.vsix'
