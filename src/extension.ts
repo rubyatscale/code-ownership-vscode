@@ -129,12 +129,15 @@ type UserAction = {
   uri: vscode.Uri;
 };
 
+// js-yaml 5's default schema no longer resolves `<<` merge keys, which team configs may use.
+const teamConfigSchema = yaml.CORE_SCHEMA.withTags(yaml.mergeTag);
+
 async function getSlackChannel(
   teamConfig: string,
 ): Promise<string | undefined> {
   try {
     const text = (await readFile(teamConfig)).toString();
-    const config = yaml.load(text) as any;
+    const config = yaml.load(text, { schema: teamConfigSchema }) as any;
 
     if (typeof config?.slack?.room_for_humans === 'string') {
       const slack = config?.slack?.room_for_humans;
