@@ -167,10 +167,14 @@ async function runCommand(
     log('info', `stdout: ${stdout}`);
   } catch (ex) {
     statusProvider.status = 'error';
-    log('error', ex.message || ex.toString());
+    log('error', errorMessage(ex));
   }
 
   return stdout;
+}
+
+function errorMessage(error: unknown): string {
+  return (error instanceof Error && error.message) || String(error);
 }
 
 function logSpace() {
@@ -387,7 +391,7 @@ class Worker implements vscode.Disposable {
       };
       this.statusProvider.status = 'idle';
     } catch (error) {
-      log('info', `Invalid ownership data format: ${error.message}`);
+      log('info', `Invalid ownership data format: ${errorMessage(error)}`);
       this.statusProvider.owner = undefined;
       this.statusProvider.status = 'idle';
     }
